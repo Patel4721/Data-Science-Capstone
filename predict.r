@@ -3,11 +3,11 @@ predictWord <- function(modelDir, input, maxResults=3, logging=FALSE, discount=0
   if (logging) sink("log.txt", append=FALSE, split=FALSE)
   
   #setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Coursera/Data Science Capstone/Report")
-  source("library_setup.r", local = TRUE)
-  setupEnvironment()
+  #source("library_setup.r", local = TRUE)
+  #setupEnvironment()
     
   # Load the prediction data
-  load(paste0(modelDir, "-", "modelData.RData"))
+  # load(paste0(modelDir, "-", "modelData.RData"))
   
   # Clean up the input data
   input <- tolower(input)

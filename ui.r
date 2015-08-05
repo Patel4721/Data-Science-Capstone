@@ -17,16 +17,14 @@ shinyUI(fluidPage(
     numericInput("n",
                  h5("Numbers of predicted words"),
                  value = 3),
-    radioButtons("radio",
-                 h5("Smoothing"),
-                 choices = list("Stupid Back-off" = 1, "Kneser-Ney " = 2),
-                 selected = 1),
-    submitButton("SUBMIT"),
+    submitButton("Submit"),
     br(),
     img(src = "logo1.jpg", height = 50, width = 50),
     "This app is created by ",
-    a("Andrew Kireru", href = "gitobuk@gmail.com"),
-    p(strong(em("Github repository:",a("A John Hopkins University - Capstone Project",href="https://github.com/kireru/john-hopkins-data-science-capstone-project/tree/master"))))
+    a("Shailesh Patel", href = "patel4721@gmail.com"),
+    p(strong(em("Github repository:",
+                a("A John Hopkins University - Capstone Project",
+                  href="https://github.com/Patel4721/Data-Science-Capstone"))))
   ),
   mainPanel(
     tabsetPanel(type = "tabs",

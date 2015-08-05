@@ -7,7 +7,10 @@
 library(shiny)
 library(tm)
 source('predict.r')
-#attach('Model-modelData.RData')
+source("library_setup.r")
+attach('Model-modelData.RData')
+
+setupEnvironment()
 
 shinyServer(function(input, output) {
   dataInput <- reactive({
@@ -16,11 +19,9 @@ shinyServer(function(input, output) {
     on.exit(progress$close())
     
     progress$set(message = "predicting", value = 3)
-    if(input$radio == 1){
-      predictWord(modelDir="Model", input$entry, maxResults = input$n)
-    }else{
-      predictWord(modelDir="Model", input$entry, maxResults = input$n)
-    }
+    
+    predictWord(modelDir="Model", input$entry, maxResults = input$n)
+    
   })
   output$text <- renderText({
     dataInput()
