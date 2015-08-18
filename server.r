@@ -6,7 +6,7 @@
 
 library(shiny)
 library(tm)
-source('predictBackOff.r')
+source('predictbackoff.r')
 source("library_setup.r")
 attach('data/Model-BF-modelData.RData')
 
