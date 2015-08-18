@@ -20,6 +20,7 @@ predictbf<- function(input, modelID, maxResults=3, logging=FALSE, stopwordsflag=
   input3 <- inputItems[4] # Third word of input
   input4 <- inputItems[5] # Third word of input
   nwords <- inputItems[6] # Total number of input characters provided 
+  if (nwords==1) input2 <- input1
   
   # Check if the number of characters and words in input is sufficient
   # We need at least 1 words that at least 2 characters for the prediction to execute
