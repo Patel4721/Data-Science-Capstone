@@ -10,13 +10,13 @@ getEndingCount <-function(mytable, searchTerm)
   sum(findterms)
 }
 
-probabilityMatrix <-function(docMatrix)
+probabilityMatrix <-function(docMatrix, modelType)
 {
   # Sum up the term frequencies
-  termSums<-cbind(colnames(as.matrix(docMatrix)),as.numeric(colSums(as.matrix(docMatrix))))
+  termSums<-cbind(colnames(as.matrix(docMatrix)), as.numeric(colSums(as.matrix(docMatrix))))
   
   # Calculate the probabilties
-  termSums<-cbind(termSums,(as.numeric(termSums[ , 2])/sum(as.numeric(termSums[ , 2]))))
+  # termSums<-cbind(termSums,(as.numeric(termSums[ , 2])/sum(as.numeric(termSums[ , 2]))))
   
   # Split the gram into individual words so we can extract the starting word and ending word
   # From the n-gram
@@ -26,38 +26,42 @@ probabilityMatrix <-function(docMatrix)
   
   # We need to know the number of columns in the n-gram split so we can extract only the 
   # first word (starting uni) and the ending word (ending uni).
-  
-  # This is so we can use Keynes-Neyes smoothing later and use Pcombination to 
-  # account for words like "Franciso" being more frequntly followed by "San"
-  if (numberOfElements==1) termSums <- cbind(termSums, tmp[, 1], "")
-  if (numberOfElements==2) termSums <- cbind(termSums, tmp[, 1], tmp[, 2])
-  if (numberOfElements==3) termSums <- cbind(termSums, tmp[, 1], tmp[, 3])
-  
+  # Will also establish the starting bigram for trigram tables. 
+  if (modelType=="KN")
+  {
+    # This is so we can use Keynes-Neyes smoothing later and use Pcombination to 
+    # account for words like "Franciso" being more frequntly followed by "San"
+    if (numberOfElements==1) termSums <- cbind(termSums, tmp[, 1], "", "", "")
+    if (numberOfElements==2) termSums <- cbind(termSums, tmp[, 1], tmp[, 2], "", "")
+    if (numberOfElements==3) termSums <- cbind(termSums, tmp[, 1], tmp[, 3], 
+                                               paste(tmp[, 1], tmp[, 2]), 
+                                               paste(tmp[, 2], tmp[, 3]))
+    # Add pretty names to the columns
+    colnames(termSums)<-c("term","count", "starting_uni", 
+                          "ending_uni", "starting_bi", "ending_bi")
+    
+  }
+  if (modelType=="BF")
+  {
+    # This is so we can use back off 
+    # tmp[, 1] - is first term
+    # tmp[, 2] - is second term
+    # tmp[, 3] - is third term
+    if (numberOfElements==1) termSums <- cbind(termSums, tmp[, 1], tmp[, 1])
+    if (numberOfElements==2) termSums <- cbind(termSums, tmp[, 1], tmp[, 2])
+    if (numberOfElements==3) termSums <- cbind(termSums, paste(tmp[, 1], tmp[, 2]), tmp[, 3])
+    if (numberOfElements==4) termSums <- cbind(termSums, paste(tmp[, 1], tmp[, 2], tmp[, 3]), tmp[, 4])
+    if (numberOfElements==5) termSums <- cbind(termSums, paste(tmp[, 1], tmp[, 2], tmp[, 3], tmp[, 4]), tmp[, 5])
+    # Add pretty names to the columns
+
+    colnames(termSums)<-c("term","count", "starting", "prediction")
+
+  } 
   # Clean up by deleting  temporary variables
   rm(tmp)
   rm(numberOfElements)
-
-  # Add pretty names to the columns
-  colnames(termSums)<-c("term","count", "term_prob", "starting_uni", "ending_uni")
   
-  termSums <- data.table(termSums, key=c("term", "starting_uni", "ending_uni"))
-  #Vector <- 0
-  #eVector <- 0
-  #rowsTermSums <- nrow(termSums)
-  #for (i in 1:rowsTermSums)
-  #{
-  #  sVector[i] <- getStartingCount(termSums$starting_uni, termSums$starting_uni[i])
-  #  eVector[i] <- getEndingCount(termSums$ending_uni, termSums$ending_uni[i])
-  #}
-  
-  #termSums$starting_count <- sVector # number of times starting uni is in data
-  #termSums$ending_count <- eVector   # number of times ending uni is in data
-  #termSums$s_cont_prob <- sVector/rowsTermSums # Continuation probability
-  #termSums$e_cont_prob <- eVector/rowsTermSums # Continuation probability
-  
-  #rm(sVector)
-  #rm(eVector)
-  
+  termSums <- data.table(termSums)
   termSums
 }
 

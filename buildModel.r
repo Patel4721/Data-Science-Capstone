@@ -1,10 +1,7 @@
 # Set source files 
 
-buildModel <- function(modelDir) {
+buildModel <- function(modelDir="Model", modelType="KN", stopwordsflag=FALSE) {
  
-  # Set the working directory
-  #setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Coursera/Data Science Capstone/Report")
-  
   source("library_setup.r", local = TRUE)
   source("model_helpers.r", local = TRUE)
   options(java.parameters = "-Xmx4g" ) #increase Java memory 
@@ -38,8 +35,8 @@ buildModel <- function(modelDir) {
   cname <- file.path(modelDir)  #point to the document repository
   docs <- Corpus(DirSource(cname)) # create the corpus
 
-  docs <- tm_map(docs, removeWords, stopwords("english")) # remove english stop words
-  docs <- tm_map(docs, removeWords, badwords)
+  if (stopwordsflag==TRUE) docs <- tm_map(docs, content_transformer(removeWords), stop_words) # remove english stop words
+  docs <- tm_map(docs, content_transformer(removeWords), badwords)
   docs <- tm_map(docs, content_transformer(tolower))  # convert to lowercase
   docs <- tm_map(docs, toSpace, "/|@|\\|")  # remove more transforms
   docs <- tm_map(docs, content_transformer(removePunctuation)) # remove punctuation
@@ -47,6 +44,8 @@ buildModel <- function(modelDir) {
   docs <- tm_map(docs, content_transformer(stripWhitespace)) # strip whitespace
   docs <- tm_map(docs, content_transformer(removeURL))
   docs <- tm_map(docs, content_transformer(removeWWW))
+  if (stopwordsflag==TRUE) docs <- tm_map(docs, content_transformer(removeWords), stop_words) # remove english stop words
+  docs <- tm_map(docs, content_transformer(removeWords), badwords)
   
   # Finalize the pre-processing by setting the documents as text documents
   docs <- tm_map(docs, PlainTextDocument)   
@@ -55,37 +54,110 @@ buildModel <- function(modelDir) {
   # matrix for each of these. I will also remove sparse terms from each of
   # the document term matrices. This will get rid of less-frequent terms.
   
-  OneGramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 1, max = 1))}
-  #onetm <- DocumentTermMatrix(docs, control = list(tokenize = OneGramTokenizer, wordLengths = c( 1, Inf)))
-  onetm <- DocumentTermMatrix(docs, control = list(tokenize = OneGramTokenizer))
+  token <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 1, max = 1))}
+  onetm <- DocumentTermMatrix(docs, control = list(tokenize = token, wordLengths = c(3, Inf)))
   onetms <- removeSparseTerms(onetm, 0.999)
+  rm(onetm)
   
-  TwogramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 2, max = 2))}
-  twotm <- DocumentTermMatrix(docs, control = list(tokenize = TwogramTokenizer))
+  token <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 2, max = 2))}
+  twotm <- DocumentTermMatrix(docs, control = list(tokenize = token, wordLengths = c(3, Inf)))
   twotms <- removeSparseTerms(twotm, 0.999)
+  rm(twotm)
   
-  ThreegramTokenizer <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 3, max = 3))}
-  threetm <- DocumentTermMatrix(docs, control = list(tokenize = ThreegramTokenizer))
+  token <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 3, max = 3))}
+  threetm <- DocumentTermMatrix(docs, control = list(tokenize = token, wordLengths = c(3, Inf)))
   threetms <- removeSparseTerms(threetm, 0.999)
+  rm(threetm)
+
+  token <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 4, max = 4))}
+  fourtm <- DocumentTermMatrix(docs, control = list(tokenize = token, wordLengths = c(3, Inf)))
+  fourtms <- removeSparseTerms(fourtm, 0.999)
+  rm(fourtm)
+
+  token <- function(x) {RWeka::NGramTokenizer(x, RWeka::Weka_control(min = 5, max = 5))}
+  fivetm <- DocumentTermMatrix(docs, control = list(tokenize = token, wordLengths = c(3, Inf)))
+  fivetms <- removeSparseTerms(fivetm, 0.999)
+  rm(fivetm)
   
   #   Build Model
   
   #  The basic model is: 
       
-  #   P(wn | w1, w2, w3, wn-1) - conditional probability of the last word give the
-  #   previous words Store language models in logs
+  #   P(wn | w1, w2, w3, wn-1) - conditional probability of the last word 
   #   
-  #   Model Building We want to create the probabilities table. We start
+  #   Model Building - create the model table. We start
   #   by counting the number of times each word has been used.
 
-  #Create the probability matrices for each of the n-grams
-  onetm.pMatrix <- probabilityMatrix(onetm)
-  twotm.pMatrix <- probabilityMatrix(twotm)
-  threetm.pMatrix <- probabilityMatrix(threetm)
-  
-  # Save the objects for the prediction 
-  save(onetm.pMatrix, twotm.pMatrix, threetm.pMatrix, badwords, stop_words, file= paste0(modelDir, "-", "modelData.RData"))
-  rm(onetm.pMatrix, twotm.pMatrix, threetm.pMatrix, docs)
+  if (modelType=="KN") # build for KN model
+  {
+    # Create the probability matrices for each of the n-grams
+    onetm.pMatrix <- probabilityMatrix(onetms, modelType)
+    setkey(onetm.pMatrix, term)
+    twotm.pMatrix <- probabilityMatrix(twotms, modelType)
+    twotm.pMatrix.starting_uni <- copy(twotm.pMatrix)
+    twotm.pMatrix.ending_uni <- copy(twotm.pMatrix)
+    setkey(twotm.pMatrix, term)
+    setkey(twotm.pMatrix.starting_uni, starting_uni)
+    setkey(twotm.pMatrix.ending_uni, ending_uni)
+    threetm.pMatrix <- probabilityMatrix(threetms, modelType)
+    threetm.pMatrix.starting_bi <- copy(threetm.pMatrix)
+    threetm.pMatrix.ending_bi <- copy(threetm.pMatrix)
+    setkey(threetm.pMatrix, term)
+    setkey(threetm.pMatrix.starting_bi, starting_bi)
+    setkey(threetm.pMatrix.ending_bi, ending_bi)
+    
+    # Gather counts of data to be used in runtime
+    threetm.rowcount <- nrow(threetm.pMatrix)
+    twotm.rowcount <- nrow(twotm.pMatrix)
+    onetm.rowcount <- nrow(onetm.pMatrix)
+    
+    # Save the objects for the prediction 
+    save(onetm.pMatrix, twotm.pMatrix, twotm.pMatrix.starting_uni, twotm.pMatrix.ending_uni,
+         threetm.pMatrix, threetm.pMatrix.starting_bi, threetm.pMatrix.ending_bi,
+         badwords, stop_words, threetm.rowcount, twotm.rowcount, onetm.rowcount,
+         file= paste0(modelDir, "-KN-", "modelData.RData"))
+    
+    rm(onetm.pMatrix, twotm.pMatrix, threetm.pMatrix, docs, 
+       threetm.rowcount, twotm.rowcount, onetm.rowcount, 
+       twotm.pMatrix.starting_uni, twotm.pMatrix.ending_uni,
+       threetm.pMatrix.starting_bi, threetm.pMatrix.ending_bi, onetms, twotms, threetms, 
+       fourtms, fivetms, onetm, twotm, threetm, 
+       fourtm, fivetm)
+  }
+  if (modelType=="BF") # Build for back off model
+  {
+    # Create the probability matrices for each of the n-grams
+    onetm.pMatrix <- probabilityMatrix(onetms, modelType)
+    setkey(onetm.pMatrix, starting)
+    twotm.pMatrix <- probabilityMatrix(twotms, modelType)
+    setkey(twotm.pMatrix, starting)
+    threetm.pMatrix <- probabilityMatrix(threetms, modelType)
+    setkey(threetm.pMatrix, starting)
+    fourtm.pMatrix <- probabilityMatrix(fourtms, modelType)
+    setkey(fourtm.pMatrix, starting)
+    fivetm.pMatrix <- probabilityMatrix(fivetms, modelType)
+    setkey(fivetm.pMatrix, starting)
+    
+    # Gather counts of data to be used in runtime
+    fivetm.rowcount <- nrow(fivetm.pMatrix)
+    fourtm.rowcount <- nrow(fourtm.pMatrix)
+    threetm.rowcount <- nrow(threetm.pMatrix)
+    twotm.rowcount <- nrow(twotm.pMatrix)
+    onetm.rowcount <- nrow(onetm.pMatrix)
+    
+    # Save the objects for the prediction 
+    save(onetm.pMatrix, twotm.pMatrix,
+         threetm.pMatrix,fourtm.pMatrix, fivetm.pMatrix,
+         fivetm.rowcount, fourtm.rowcount,
+         badwords, stop_words, threetm.rowcount, twotm.rowcount, onetm.rowcount,
+         file= paste0(modelDir, "-BF-", "modelData.RData"))
+    
+    rm(onetm.pMatrix, twotm.pMatrix, threetm.pMatrix, fourtm.pMatrix, fivetm.pMatrix, docs, 
+       threetm.rowcount, twotm.rowcount, onetm.rowcount, fourtm.rowcount, fivetm.rowcount, token,
+       onetms, twotms, threetms, 
+       fourtms, fivetms, onetm, twotm, threetm, 
+       fourtm, fivetm)
+  }
   gc(verbose=FALSE)
 }
 

@@ -6,9 +6,9 @@
 
 library(shiny)
 library(tm)
-source('predict.r')
+source('predictBackOff.r')
 source("library_setup.r")
-attach('Model-modelData.RData')
+attach('data/Model-BF-modelData.RData')
 
 setupEnvironment()
 
@@ -18,9 +18,9 @@ shinyServer(function(input, output) {
     # Make sure it closes when we exit this reactive, even if there's an error
     on.exit(progress$close())
     
-    progress$set(message = "predicting", value = 3)
+    progress$set(message = "predicting...", value = 3)
     
-    predictWord(modelDir="Model", input$entry, maxResults = input$n)
+    predictbf(input=input$entry, modelID="BF3", maxResults = input$n)
     
   })
   output$text <- renderText({
