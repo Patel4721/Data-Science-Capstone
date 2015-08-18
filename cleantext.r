@@ -1,4 +1,4 @@
-cleanText <- function(input, stopwordsflag=FALSE, modelID="BF3") {
+cleantext <- function(input, stopwordsflag=FALSE, modelID="BF3") {
  
 # Clean the input text
 #

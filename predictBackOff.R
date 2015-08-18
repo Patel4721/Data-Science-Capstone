@@ -1,7 +1,7 @@
 predictbf<- function(input, modelID, maxResults=3, logging=FALSE, stopwordsflag=FALSE)
 {
   # load the necessary libraries
-  source("cleanText.r", local = TRUE)
+  source("cleantext.r", local = TRUE)
   
   # Initialize local variables
   searchQuadgramFlag <- FALSE
