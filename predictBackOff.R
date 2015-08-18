@@ -13,7 +13,7 @@ predictbf<- function(input, modelID, maxResults=3, logging=FALSE, stopwordsflag=
   
   
   # Clean up the input data
-  inputItems <- cleanText(input, stopwordsflag = FALSE, modelID)
+  inputItems <- cleantext(input, stopwordsflag = FALSE, modelID)
   input <- inputItems[1]  # Cleaned input string
   input1 <- inputItems[2] # First word of input
   input2 <- inputItems[3] # Second word of input
